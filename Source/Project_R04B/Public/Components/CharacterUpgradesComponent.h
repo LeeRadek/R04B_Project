@@ -10,7 +10,7 @@ class UCharacterUpgrade;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDataChange);
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable, BlueprintType)
 class PROJECT_R04B_API UCharacterUpgradesComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -38,12 +38,21 @@ public:
 	UFUNCTION( BlueprintCallable, Category = "Character Upgrades")
 	void AddCharacterData(float ValueToAdd) { CharacterData += ValueToAdd; }
 	
-	//Check if the character has enough data to apply a specific upgrade, based on the upgrade's requirements and the character's current data
+	//Check if the character has enough data to apply a specific upgrade, returning the missing data if not enough
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
-	bool IsEnoughDataToApplyUpgrade(UCharacterUpgrade* Upgrade) const;
+	bool IsEnoughDataToApplyUpgrade(UCharacterUpgrade* Upgrade, float& MissingData) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
+	bool CreateCharacterUpgrade(TSubclassOf<UCharacterUpgrade> UpgradeClass);
 	
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
 	bool ApplyUpgrade(UCharacterUpgrade* Upgrade);
+	
+	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
+	bool RemoveUpgrade(UCharacterUpgrade* Upgrade);
+	
+	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
+	void UnlockUsedCharacterData(float ValueToUnlock) { LockedCharacterData -= ValueToUnlock; }
 	
 	// Function to apply a character upgrade, modifying the character's data based on the upgrade's effects
 	UPROPERTY(BlueprintAssignable, Category = "Character Upgrades")

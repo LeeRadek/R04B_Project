@@ -1,7 +1,5 @@
 #pragma once
 
-class ProjectLogs
-{
-public:
+DECLARE_LOG_CATEGORY_EXTERN(LogInventory, Error, All);
 	
-};
+
