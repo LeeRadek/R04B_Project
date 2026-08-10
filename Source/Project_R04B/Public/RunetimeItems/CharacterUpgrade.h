@@ -12,7 +12,7 @@ class UCharacterUpgradesComponent;
 /**
  * 
  */
-UCLASS(BlueprintType, Blueprintable)
+UCLASS(BlueprintType, Blueprintable, Abstract)
 class PROJECT_R04B_API UCharacterUpgrade : public UObject
 {
 	GENERATED_BODY()

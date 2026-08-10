@@ -42,11 +42,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
 	bool IsEnoughDataToApplyUpgrade(UCharacterUpgrade* Upgrade, float& MissingData) const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
-	bool CreateCharacterUpgrade(TSubclassOf<UCharacterUpgrade> UpgradeClass);
+	// Function to create a new character upgrade object based on a specified upgrade class, returning success status
+	UFUNCTION()
+	UCharacterUpgrade* CreateCharacterUpgrade(TSubclassOf<UCharacterUpgrade> UpgradeClass);
 	
+	// Apply a character upgrade to the character, modifying the character's data and state based on the upgrade's effects
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
-	bool ApplyUpgrade(UCharacterUpgrade* Upgrade);
+	bool ApplyUpgrade(TSubclassOf<UCharacterUpgrade> Upgrade, uint8& OutIndex);
 	
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
 	bool RemoveUpgrade(UCharacterUpgrade* Upgrade);
@@ -72,6 +74,9 @@ private:
 	// Array to hold the character's upgrades, allowing for dynamic management of upgrades and their effects on the character
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Character Upgrades", meta=(AllowPrivateAccess="true"))
 	TArray<TObjectPtr<UCharacterUpgrade>> CharacterUpgrades;
+	
+	UFUNCTION()
+	bool AddToUpgradesArray(UCharacterUpgrade* UpgradeToAdd, uint8& UpgradeIndex);
 	
 	
 };

@@ -90,4 +90,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
 	void DropUpgrade(UUpgradeObject* UpgradeToDrop);
+	
+
 };
