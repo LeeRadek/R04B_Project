@@ -6,11 +6,14 @@
 #include "Components/ActorComponent.h"
 #include "CharacterUpgradesComponent.generated.h"
 
+class AR04BPlayerState;
+class ABasePlayerChracter;
 class UCharacterUpgrade;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDataChange);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUpgradeChanged, UCharacterUpgrade*, Upgrade, int32, UpgradeIndex);
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable, BlueprintType)
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable, BlueprintType, Abstract)
 class PROJECT_R04B_API UCharacterUpgradesComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -19,11 +22,16 @@ public:
 	// Sets default values for this component's properties
 	UCharacterUpgradesComponent();
 
-	
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Character Upgrades")
+	TObjectPtr<ABasePlayerChracter> OwningPlayer;
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	
+	// Pointer to the player state that owns this component, allowing for access to player-specific data and functionality
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<AR04BPlayerState> OwningPlayerState;
 
 public:
 	// Called every frame
@@ -40,7 +48,7 @@ public:
 	
 	//Check if the character has enough data to apply a specific upgrade, returning the missing data if not enough
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
-	bool IsEnoughDataToApplyUpgrade(UCharacterUpgrade* Upgrade, float& MissingData) const;
+	bool IsEnoughDataToApplyUpgrade(TSubclassOf<UCharacterUpgrade> Upgrade, float& MissingData) const;
 	
 	// Function to create a new character upgrade object based on a specified upgrade class, returning success status
 	UFUNCTION()
@@ -48,10 +56,10 @@ public:
 	
 	// Apply a character upgrade to the character, modifying the character's data and state based on the upgrade's effects
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
-	bool ApplyUpgrade(TSubclassOf<UCharacterUpgrade> Upgrade, uint8& OutIndex);
+	bool ApplyUpgrade(TSubclassOf<UCharacterUpgrade> Upgrade, int32& OutIndex);
 	
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
-	bool RemoveUpgrade(UCharacterUpgrade* Upgrade);
+	UCharacterUpgrade* RemoveUpgrade(UCharacterUpgrade* Upgrade);
 	
 	UFUNCTION(BlueprintCallable, Category = "Character Upgrades")
 	void UnlockUsedCharacterData(float ValueToUnlock) { LockedCharacterData -= ValueToUnlock; }
@@ -59,6 +67,9 @@ public:
 	// Function to apply a character upgrade, modifying the character's data based on the upgrade's effects
 	UPROPERTY(BlueprintAssignable, Category = "Character Upgrades")
 	FOnDataChange OnDataChange;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Character Upgrades")
+	FOnUpgradeChanged OnUpgradeChanged;
 	
 private:
 	
@@ -76,7 +87,14 @@ private:
 	TArray<TObjectPtr<UCharacterUpgrade>> CharacterUpgrades;
 	
 	UFUNCTION()
-	bool AddToUpgradesArray(UCharacterUpgrade* UpgradeToAdd, uint8& UpgradeIndex);
+	bool AddToUpgradesArray(UCharacterUpgrade* UpgradeToAdd, int32& UpgradeIndex);
+	
+	/// Resize the character upgrades array to a new size,
+	/// allowing for dynamic management of the number of upgrades the character can hold
+	/// @param NewSize - The new size for the character upgrades array
+	UFUNCTION(BlueprintCallable, Category = "Character Upgrades", meta = (DisplayName = "Resize Character Upgrades Array"))
+	void ResizeUpgradesArray(int32 NewSize) { CharacterUpgrades.SetNum(NewSize); }
+	
 	
 	
 };

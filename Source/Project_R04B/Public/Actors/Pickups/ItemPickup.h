@@ -20,8 +20,8 @@ public:
 	AItemPickup();
 	
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon Pickup")
-	bool bIsNewWeapon = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item Pickup")
+	bool bIsNewItem = true;
 
 protected:
 

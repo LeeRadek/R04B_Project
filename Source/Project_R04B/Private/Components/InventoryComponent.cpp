@@ -28,7 +28,7 @@ void UInventoryComponent::BeginPlay()
 }
 
 void UInventoryComponent::InitializeWeapon(UWeaponObject* WeaponToInitialize, UWeaponDataAsset* WeaponDataAsset,
-	FWeaponRuntimeData WeaponRuntimeData)
+	const FWeaponRuntimeData& WeaponRuntimeData)
 {
 	if (!WeaponToInitialize)
 	{
@@ -60,10 +60,9 @@ void UInventoryComponent::InitializeWeapon(UWeaponObject* WeaponToInitialize, UW
 	// ensuring that the weapon can hold the appropriate number of upgrades for its rarity level
 	WeaponToInitialize->WeaponRuntimeData.ResizeUpgradeArray();
 	
-	
 }
 
-UWeaponObject* UInventoryComponent::CreateWeaponObject(UWeaponDataAsset* WeaponDataAsset, FWeaponRuntimeData WeaponRuntimeData)
+UWeaponObject* UInventoryComponent::CreateWeaponObject(UWeaponDataAsset* WeaponDataAsset, const FWeaponRuntimeData& WeaponRuntimeData)
 {
 	if (!WeaponDataAsset)
 	{

@@ -11,6 +11,9 @@
 class UWeaponObject;
 class UWeaponDataAsset;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponPickedUp, UWeaponObject*, PickedUpWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipedWeaponDropped, UWeaponObject*, DroppedWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChanged, UWeaponObject*, DroppedWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponEquipped, UWeaponObject*, EquippedWeapon, int32, SlotIndex);
 
 // Component to manage the player's inventory of weapons, allowing for adding, equipping, and upgrading weapons
@@ -34,6 +37,18 @@ public:
 	// Delegate to notify when a weapon is equipped, allowing for UI updates and other gameplay logic
 	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
 	FOnWeaponEquipped OnWeaponEquipped;
+	
+	// Delegate to notify when a weapon was changed
+	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
+	FOnWeaponChanged OnWeaponChanged;
+	
+	// Delegate to notify when a weapon is picked up
+	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
+	FOnWeaponPickedUp OnWeaponPickedUp;
+	
+	// Delegate to notify when the currently equipped weapon is dropped
+	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
+	FOnEquipedWeaponDropped OnEquippedWeaponDropped;
 
 protected:
 	// Called when the game starts
@@ -44,13 +59,13 @@ protected:
 	// @param WeaponDataAsset - The data asset containing the configuration and static data for the
 	UFUNCTION()
 	static void InitializeWeapon(UWeaponObject* WeaponToInitialize, UWeaponDataAsset* WeaponDataAsset,
-		FWeaponRuntimeData WeaponRuntimeData);
+		const FWeaponRuntimeData& WeaponRuntimeData);
 
 	// Function to create a new weapon object based on a weapon data asset
 	// @param WeaponDataAsset - The data asset containing the configuration and static data for the weapon to create
 	// @return A pointer to the newly created weapon object, or nullptr if the creation failed
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
-	UWeaponObject* CreateWeaponObject(UWeaponDataAsset* WeaponDataAsset, FWeaponRuntimeData WeaponRuntimeData);
+	UWeaponObject* CreateWeaponObject(UWeaponDataAsset* WeaponDataAsset, const FWeaponRuntimeData& WeaponRuntimeData);
 	
 	
 public:	
@@ -91,5 +106,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
 	void DropUpgrade(UUpgradeObject* UpgradeToDrop);
 	
+	// Return the currently equipped weapon, or nullptr if no weapon is equipped
+	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
+	UWeaponObject* GetEquipedWeapon() const { return EquippedWeapon; }
 
 };
