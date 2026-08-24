@@ -3,6 +3,7 @@
 
 #include "Components/InventoryComponent.h"
 
+#include "Logs/ProjectLogs.h"
 #include "RunetimeItems/Data/WeaponDataAsset.h"
 
 // Sets default values for this component's properties
@@ -155,6 +156,7 @@ bool UInventoryComponent::AddUpgradeToWeapon(UUpgradeObject* UpgradeToAdd)
 		{
 			Upgrades[i] = UpgradeToAdd; // Add the new upgrade to the first available slot
 			//UpgradeSlotIndex = i; // Output the index of the slot where the upgrade was added
+			OnUpgradAddedToWeapon.Broadcast(UpgradeToAdd, i); // Broadcast Delegate for UI
 			return true; // Successfully added the upgrade to the weapon
 		}
 	}
@@ -188,6 +190,9 @@ bool UInventoryComponent::PickupWeapon(UWeaponDataAsset* WeaponDataAsset, FWeapo
 			UWeaponObject* NewWeapon = NewObject<UWeaponObject>(GetOwner(), WeaponClass);
 			InitializeWeapon(NewWeapon, WeaponDataAsset, WeaponRuntimeData);
 			Weapons[i] = NewWeapon; // Add the new weapon to the first available slot
+			int32 SlotIndex;
+			AddWeaponToInventory(NewWeapon, SlotIndex); // Cheki if this ok later
+			OnWeaponPickedUp.Broadcast(WeaponDataAsset); // Update UI Slot
 			return true;
 		}
 	}
@@ -217,6 +222,23 @@ void UInventoryComponent::DropWeapon(UWeaponObject* WeaponToDrop)
 void UInventoryComponent::DropUpgrade(UUpgradeObject* UpgradeToDrop)
 {
 	
+}
+
+UUpgradeObject* UInventoryComponent::FindUpgradeInEquipedWeapon(UUpgradeObject* UpgradeToRemove, int32& SlotIndex) const
+{
+	TArray<UUpgradeObject*>& Upgrades = EquippedWeapon->WeaponRuntimeData.WeaponUpgrades;
+	
+	for (int32 i = 0; i < Upgrades.Num(); ++i)
+	{
+		if (Upgrades[i] == UpgradeToRemove)
+		{
+			SlotIndex = i + 1;
+			return Upgrades[i];
+		}
+	}
+	
+	UE_LOG(LogWeaponInventory, Error, TEXT("Not Found Weapon Upgrade In Current Equiped Weapon"));
+	return nullptr;
 }
 
 

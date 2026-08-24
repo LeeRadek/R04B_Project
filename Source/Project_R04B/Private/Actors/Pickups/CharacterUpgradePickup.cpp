@@ -30,7 +30,8 @@ void ACharacterUpgradePickup::Tick(float DeltaTime)
 
 void ACharacterUpgradePickup::Interact_Implementation(AActor* InteractingActor)
 {
-	ApplyCharacterUpgrade(InteractingActor);
+	return ApplyCharacterUpgrade(InteractingActor);
+	
 }
 
 void ACharacterUpgradePickup::ApplyCharacterUpgrade(AActor* InteractingActor)

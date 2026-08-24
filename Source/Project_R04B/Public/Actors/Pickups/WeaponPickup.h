@@ -32,5 +32,9 @@ protected:
 
 public:
 	
-
+	UFUNCTION(BlueprintCallable, Category="Character Upgrade Pickup")
+	virtual void Interact_Implementation(AActor* InteractingActor) override;
+	
+	UFUNCTION(BlueprintCallable, Category="Character Upgrade Pickup")
+	void PickupWeapon(AActor* InteractingActor);
 };

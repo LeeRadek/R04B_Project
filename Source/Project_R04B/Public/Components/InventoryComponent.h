@@ -11,10 +11,11 @@
 class UWeaponObject;
 class UWeaponDataAsset;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponPickedUp, UWeaponObject*, PickedUpWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponPickedUp, UWeaponDataAsset*, PickedUpWeaponData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipedWeaponDropped, UWeaponObject*, DroppedWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChanged, UWeaponObject*, DroppedWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponEquipped, UWeaponObject*, EquippedWeapon, int32, SlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUpgradeAddedToWeapon, UUpgradeObject*, AddedUpgrade, int32, SlotIndex);
 
 // Component to manage the player's inventory of weapons, allowing for adding, equipping, and upgrading weapons
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnable), Blueprintable, BlueprintType, Abstract)
@@ -49,6 +50,9 @@ public:
 	// Delegate to notify when the currently equipped weapon is dropped
 	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
 	FOnEquipedWeaponDropped OnEquippedWeaponDropped;
+	
+	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
+	FOnUpgradeAddedToWeapon OnUpgradAddedToWeapon;
 
 protected:
 	// Called when the game starts
@@ -105,6 +109,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
 	void DropUpgrade(UUpgradeObject* UpgradeToDrop);
+	
+	UFUNCTION()
+	UUpgradeObject* FindUpgradeInEquipedWeapon(UUpgradeObject* UpgradeToRemove, int32& SlotIndex) const;
 	
 	// Return the currently equipped weapon, or nullptr if no weapon is equipped
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
