@@ -24,6 +24,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon Upgrade")
 	FName UpgradeName;
 	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Weapon Upgrade")
+	FText Description;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Weapon Upgrade")
+	TObjectPtr<UTexture2D> Icon;
+	
 public:
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Weapon Upgrade", DisplayName="Start Fire")
