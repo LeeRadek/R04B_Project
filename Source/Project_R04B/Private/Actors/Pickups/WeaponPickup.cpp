@@ -32,8 +32,10 @@ void AWeaponPickup::PickupWeapon(AActor* InteractingActor)
 	APlayerState* PS = Pawn->GetPlayerState();
 	AR04BPlayerState* State = Cast<AR04BPlayerState>(PS);
 	UInventoryComponent* WeaponComponent = State->GetInventoryComponents();
-	bool bSucess = WeaponComponent->PickupWeapon(WeaponDataAsset, WeaponRuntimeData);
-	Destroy();
+	if (WeaponComponent->PickupWeapon(WeaponDataAsset, WeaponRuntimeData, bHasSavedRuntimeData))
+	{
+		Destroy();
+	}
 }
 
 

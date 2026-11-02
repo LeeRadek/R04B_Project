@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InventoryItemObject.h"
 #include "Data/WeaponRuntimeData.h"
 #include "UObject/Object.h"
 #include "WeaponObject.generated.h"
@@ -17,7 +18,7 @@ class UWeaponDataAsset;
  * to allow for flexible and customizable weapon behavior based on different weapon types and configurations.
  */
 UCLASS(BlueprintType, Blueprintable, HideDropdown)
-class PROJECT_R04B_API UWeaponObject : public UObject
+class PROJECT_R04B_API UWeaponObject : public UInventoryItemObject
 {
 	GENERATED_BODY()
 	

@@ -5,7 +5,7 @@
 
 UUpgradeObject::UUpgradeObject()
 {
-	
+	ItemType = EInventoryItemType::WeaponUpgrade;
 }
 
 void UUpgradeObject::Initialize(AActor* UpgradeOwner)

@@ -3,6 +3,8 @@
 
 #include "Components/InventoryComponent.h"
 
+#include "Actors/Characters/PlayableCharacters/BasePlayerChracter.h"
+#include "GameFramework/PlayerState.h"
 #include "Logs/ProjectLogs.h"
 #include "RunetimeItems/Data/WeaponDataAsset.h"
 
@@ -13,8 +15,7 @@ UInventoryComponent::UInventoryComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	Weapons.SetNum(3); // Initialize size for 3 weapons, can be modified later to allow for dynamic inventory sizes
-	// @TODO : Chamge it later to fit the design of the inventory system, this is just a placeholder for testing purposes
+	
 	// ...
 }
 
@@ -23,13 +24,16 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	APlayerState* PS = Cast<APlayerState>(GetOwner());
+	ACharacter* PlayerCharacter = Cast<ACharacter>(PS->GetPawn());
+	ABasePlayerChracter* BasePlayerCharacter = Cast<ABasePlayerChracter>(PlayerCharacter);
+	GiveStartWeapon(BasePlayerCharacter->StartWeaponData);
 	// ...
 	
 }
 
 void UInventoryComponent::InitializeWeapon(UWeaponObject* WeaponToInitialize, UWeaponDataAsset* WeaponDataAsset,
-	const FWeaponRuntimeData& WeaponRuntimeData)
+	const FWeaponRuntimeData& WeaponRuntimeData, bool bIsNewWeapon)
 {
 	if (!WeaponToInitialize)
 	{
@@ -43,23 +47,7 @@ void UInventoryComponent::InitializeWeapon(UWeaponObject* WeaponToInitialize, UW
 		return;
 	}
 	
-	
-	WeaponToInitialize->WeaponStaticData = WeaponDataAsset;
-	
-	WeaponToInitialize->WeaponRuntimeData.AmmoCount = WeaponRuntimeData.AmmoCount;
-	WeaponToInitialize->WeaponRuntimeData.CurrentClipSize = WeaponRuntimeData.CurrentClipSize;
-	WeaponToInitialize->WeaponRuntimeData.MaxAmmo = WeaponRuntimeData.MaxAmmo;
-	WeaponToInitialize->WeaponRuntimeData.FireRate = WeaponRuntimeData.FireRate;
-	WeaponToInitialize->WeaponRuntimeData.ReloadTime = WeaponRuntimeData.ReloadTime;
-	WeaponToInitialize->WeaponRuntimeData.Damage = WeaponRuntimeData.Damage;
-	WeaponToInitialize->WeaponRuntimeData.ProjectileSpeed = WeaponRuntimeData.ProjectileSpeed;
-	WeaponToInitialize->WeaponRuntimeData.FireType = WeaponRuntimeData.FireType;
-	WeaponToInitialize->WeaponRuntimeData.Rarity = WeaponRuntimeData.Rarity;
-	WeaponToInitialize->WeaponRuntimeData.WeaponFireType = WeaponRuntimeData.WeaponFireType;
-	
-	// Resize the upgrade array based on the weapon's rarity,
-	// ensuring that the weapon can hold the appropriate number of upgrades for its rarity level
-	WeaponToInitialize->WeaponRuntimeData.ResizeUpgradeArray();
+	InitializePickedUpWeapon(WeaponToInitialize, WeaponDataAsset, WeaponRuntimeData, bIsNewWeapon);
 	
 }
 
@@ -70,7 +58,7 @@ UWeaponObject* UInventoryComponent::CreateWeaponObject(UWeaponDataAsset* WeaponD
 		UE_LOG(LogTemp, Warning, TEXT("Invalid WeaponDataAsset provided to CreateWeaponObject"));
 		return nullptr;
 	}
-\
+
 	AActor* OwnerActor = GetOwner();
 	// Create a new weapon object
 	UWeaponObject* NewWeaponObject = NewObject<UWeaponObject>(OwnerActor, WeaponDataAsset->WeaponConfig.WeaponClass);
@@ -92,59 +80,56 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
-// Find not equiped weapon and equip it
+// 
 bool UInventoryComponent::AddWeaponToInventory(UWeaponObject* NewWeapon, int32& SlotIndex)
 {
-	for (int32 i = 0; i < Weapons.Num(); ++i)
+	if (!NewWeapon)
 	{
-		if (!Weapons[i]) // Check for an empty slot in the inventory
-		{
-			Weapons[i] = NewWeapon; // Add the new weapon to the first available slot
-			UE_LOG(LogTemp, Log, TEXT("Added weapon: %s to inventory slot: %d"), *NewWeapon->GetName(), i);
-			SlotIndex = i; // Output the index of the slot where the weapon was added
-			return true; // Successfully added the weapon to the inventory
-		}
+		UE_LOG(LogWeaponInventory, Warning, TEXT("Invalid WeaponObject provided to AddWeaponToInventory"));
+		return false; // Invalid weapon object provided
 	}
-	return false;
+	
+	SlotIndex = Weapons.Add(NewWeapon); // Add the new weapon to the inventory and get its slot index
+	return true;
 }
 
 bool UInventoryComponent::EquipWeapon()
 {
-	if (Weapons.Num() == 0)
+	if (Weapons.IsEmpty())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No weapons in inventory to equip"));
 		return false; // No weapons in the inventory to equip
 	}
-	 int32 SlotIndex = Weapons.Find(EquippedWeapon);
+	 const int32 CurrentIndex = Weapons.Find(EquippedWeapon);
 	
-	if (Weapons.IsValidIndex(SlotIndex) && !Weapons[SlotIndex])
+	if (CurrentIndex == INDEX_NONE)
 	{
 		for (int32 i = 0; i < Weapons.Num(); ++i)
 		{
-			if (Weapons[i])
+			if (IsValid(Weapons[i]))
 			{
 				EquippedWeapon = Weapons[i]; // Equip the first available weapon in the inventory
-				UE_LOG(LogTemp, Log, TEXT("Equipped weapon: %s from inventory slot: %d"), *EquippedWeapon->GetName(), i);
+				UE_LOG(LogWeaponInventory, Log, TEXT("Equipped weapon: %s from inventory slot: %d"), *EquippedWeapon->GetName(), i);
 				return true; // Successfully equipped a weapon
 			}
 		}
-		
-		UE_LOG(LogTemp, Warning, TEXT("No valid weapons found in inventory to equip"));
 		return false;
 	}
-	
+		
 	for (int32 Offset = 1; Offset < Weapons.Num(); ++Offset)
 	{
-		int32 NextIndex = (SlotIndex + Offset) % Weapons.Num();
-		if (Weapons[NextIndex])
+		const int32 NextIndex = (CurrentIndex + Offset) % Weapons.Num();
+		if (IsValid(Weapons[NextIndex]))
 		{
 			EquippedWeapon = Weapons[NextIndex]; // Equip the next available weapon in the inventory
 			UE_LOG(LogTemp, Log, TEXT("Equipped weapon: %s from inventory slot: %d"), *EquippedWeapon->GetName(), NextIndex);
 			return true;
 		}
+		return false;
 	}
-	
 	return false; // No valid weapons found in the inventory to equip
+
+	
 }
 
 bool UInventoryComponent::AddUpgradeToWeapon(UUpgradeObject* UpgradeToAdd)
@@ -156,11 +141,25 @@ bool UInventoryComponent::AddUpgradeToWeapon(UUpgradeObject* UpgradeToAdd)
 		{
 			Upgrades[i] = UpgradeToAdd; // Add the new upgrade to the first available slot
 			//UpgradeSlotIndex = i; // Output the index of the slot where the upgrade was added
-			OnUpgradAddedToWeapon.Broadcast(UpgradeToAdd, i); // Broadcast Delegate for UI
+			OnUpgradeAddedToWeapon.Broadcast(UpgradeToAdd, i); // Broadcast Delegate for UI
 			return true; // Successfully added the upgrade to the weapon
 		}
 	}
+	
+	UE_LOG(LogWeaponInventory, Warning, TEXT("No available upgrade slots in the equipped weapon to add the upgrade: %s"), *UpgradeToAdd->GetName());
+	return false;
+}
 
+bool UInventoryComponent::IsAnyEmptyUpgradeSlotInEquippedWeapon() const
+{
+	const auto& Upgrades = EquippedWeapon->WeaponRuntimeData.WeaponUpgrades;
+	for (int32 i = 0; i < Upgrades.Num(); ++i)
+	{
+		if (!Upgrades[i])
+		{
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -179,37 +178,52 @@ UUpgradeObject* UInventoryComponent::CreateUpgradeObject(TSubclassOf<UUpgradeObj
 	return NewUpgradeObject; 
 }
 
-bool UInventoryComponent::PickupWeapon(UWeaponDataAsset* WeaponDataAsset, FWeaponRuntimeData WeaponRuntimeData)
+bool UInventoryComponent::PickupWeapon(UWeaponDataAsset* WeaponDataAsset, FWeaponRuntimeData WeaponRuntimeData, bool bIsNewWeapon)
 {
-	for (int32 i = 0; i < Weapons.Num(); ++i)
+	if (!WeaponDataAsset)
 	{
-		if (!Weapons[i])
-		{
-			TSubclassOf<UWeaponObject> WeaponClass = WeaponDataAsset->WeaponConfig.WeaponClass;
-			
-			UWeaponObject* NewWeapon = NewObject<UWeaponObject>(GetOwner(), WeaponClass);
-			InitializeWeapon(NewWeapon, WeaponDataAsset, WeaponRuntimeData);
-			Weapons[i] = NewWeapon; // Add the new weapon to the first available slot
-			int32 SlotIndex;
-			AddWeaponToInventory(NewWeapon, SlotIndex); // Cheki if this ok later
-			OnWeaponPickedUp.Broadcast(WeaponDataAsset); // Update UI Slot
-			return true;
-		}
+		UE_LOG(LogWeaponInventory, Warning, TEXT("Invalid WeaponDataAsset provided to PickupWeapon"));
+		return false; // Invalid weapon data asset provided
 	}
+	UWeaponObject* NewWeapon = CreateWeaponObject(WeaponDataAsset, WeaponRuntimeData);
+	InitializeWeapon(NewWeapon, WeaponDataAsset, WeaponRuntimeData, bIsNewWeapon);
+			
+	int32 SlotIndex;
+	AddWeaponToInventory(NewWeapon, SlotIndex); // Cheki if this ok later
+	OnWeaponPickedUp.Broadcast(WeaponDataAsset, NewWeapon->WeaponRuntimeData, NewWeapon); // Update UI Slot
 	
-	return false;
+	return true;
 }
 
 bool UInventoryComponent::PickupUpgrade(TSubclassOf<UUpgradeObject> UpgradeClass)
 {
-	if (EquippedWeapon == nullptr)
+	if (!UpgradeClass)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No weapon equipped to add the upgrade to"));
+		UE_LOG(LogWeaponInventory, Warning, TEXT("Invalid UpgradeClass provided to PickupUpgrade"));
+		return false; // Invalid upgrade class provided
+	}
+	
+	if (!EquippedWeapon || !IsAnyEmptyUpgradeSlotInEquippedWeapon())
+	{
+		UE_LOG(LogWeaponInventory, Warning, TEXT(
+			"No equipped weapon or no empty upgrade slots available to add the upgrade: %s"),
+			*UpgradeClass->GetName());
 		return false; // No weapon equipped to add the upgrade to it
 	}
 	
 	UUpgradeObject* Upgrade =  CreateUpgradeObject(UpgradeClass);
-	AddUpgradeToWeapon(Upgrade);
+	
+	if (!Upgrade)
+	{
+		UE_LOG(LogWeaponInventory, Warning, TEXT("Failed to create upgrade object from class: %s"), *UpgradeClass->GetName());
+		return false; // Failed to create the upgrade object
+	}
+	
+	if (!AddUpgradeToWeapon(Upgrade))
+	{
+		UE_LOG(LogWeaponInventory, Warning, TEXT("Failed to add upgrade: %s to equipped weapon: %s"), *Upgrade->GetName(), *EquippedWeapon->GetName());
+		return false; // Failed to add the upgrade to the equipped weapon
+	}
 	
 	return true;
 }
@@ -240,6 +254,59 @@ UUpgradeObject* UInventoryComponent::FindUpgradeInEquipedWeapon(UUpgradeObject* 
 	UE_LOG(LogWeaponInventory, Error, TEXT("Not Found Weapon Upgrade In Current Equiped Weapon"));
 	return nullptr;
 }
+
+void UInventoryComponent::GiveStartWeapon(UWeaponDataAsset* StartWeaponData)
+{
+	if (!StartWeaponData)
+	{
+		UE_LOG(LogWeaponInventory, Warning, TEXT("Invalid StartWeaponData provided to GiveStartWeapon"));
+		return;
+	}
+	UWeaponObject* NewWeapon = CreateWeaponObject(StartWeaponData, FWeaponRuntimeData());
+	InitializeWeapon(NewWeapon, StartWeaponData, FWeaponRuntimeData(), true);
+	int32 SlotIndex;
+	AddWeaponToInventory(NewWeapon, SlotIndex);
+	EquipWeapon();
+}
+
+void UInventoryComponent::InitializePickedUpWeapon(UWeaponObject* PickedUpWeapon, UWeaponDataAsset* PickedUpWeaponData,
+	const FWeaponRuntimeData& PickedUpWeaponRuntimeData, bool bIsNewWeapon)
+{
+	if (!PickedUpWeapon || !PickedUpWeaponData)
+	{
+		UE_LOG(LogWeaponInventory, Warning, TEXT("Invalid WeaponObject or WeaponDataAsset provided to InitializePickedUpWeapon"));
+		return;
+	}
+	
+	if (bIsNewWeapon)
+	{
+		// Initialize the new weapon with the provided data
+		PickedUpWeapon->WeaponStaticData = PickedUpWeaponData;
+		
+		PickedUpWeapon->WeaponRuntimeData.AmmoCount = PickedUpWeaponData->WeaponConfig.BaseMaxAmmo;
+		PickedUpWeapon->WeaponRuntimeData.CurrentClipSize = PickedUpWeaponData->WeaponConfig.BaseClipSize;
+		PickedUpWeapon->WeaponRuntimeData.MaxAmmo = PickedUpWeaponData->WeaponConfig.BaseMaxAmmo;
+		PickedUpWeapon->WeaponRuntimeData.FireRate = PickedUpWeaponData->WeaponConfig.BaseFireRate;
+		PickedUpWeapon->WeaponRuntimeData.ReloadTime = PickedUpWeaponData->WeaponConfig.BaseReloadTime;
+		PickedUpWeapon->WeaponRuntimeData.Damage = PickedUpWeaponData->WeaponConfig.BaseDamage;
+		PickedUpWeapon->WeaponRuntimeData.ProjectileSpeed = PickedUpWeaponData->WeaponConfig.BaseProjectileSpeed;
+		PickedUpWeapon->WeaponRuntimeData.FireType = PickedUpWeaponData->WeaponConfig.BaseFireType;
+		PickedUpWeapon->WeaponRuntimeData.Rarity = PickedUpWeaponData->WeaponConfig.Rarity;
+		PickedUpWeapon->WeaponRuntimeData.WeaponFireType = PickedUpWeaponData->WeaponConfig.WeaponFireType;
+		PickedUpWeapon->WeaponRuntimeData.ResizeUpgradeArray();
+		
+		
+	}
+	else
+	{
+		// Update the existing weapon's runtime data with the provided data
+		PickedUpWeapon->WeaponRuntimeData = PickedUpWeaponRuntimeData;
+		
+		PickedUpWeapon->WeaponRuntimeData.ResizeUpgradeArray();
+	}
+}
+
+
 
 
 

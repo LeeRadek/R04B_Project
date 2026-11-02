@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Textures/TextureAtlas.h"
 #include "Rarity.h"
 #include "FireTypes.h"
 #include "WeaponFireTypes.h"
@@ -63,6 +62,12 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon Config | Combat")
 	EWeaponFireTypes WeaponFireType;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon Config | Combat")
+	float BaseDamage;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon Config | Combat")
+	float BaseProjectileSpeed;
 
 };
 
@@ -79,5 +84,7 @@ inline FWeaponConfigData::FWeaponConfigData()
 	BaseFireType = EFireType::SingleFire;
 	Rarity = ERarity::Common;
 	WeaponFireType = EWeaponFireTypes::Projectile;
+	BaseDamage = 1.0f;
+	BaseProjectileSpeed = 1000.0f;
 }
 

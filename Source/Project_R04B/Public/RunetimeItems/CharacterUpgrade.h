@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InventoryItemObject.h"
 #include "UObject/Object.h"
 #include "CharacterUpgrade.generated.h"
 
@@ -16,11 +17,13 @@ class UCharacterUpgradesComponent;
  * 
  */
 UCLASS(BlueprintType, Blueprintable, Abstract)
-class PROJECT_R04B_API UCharacterUpgrade : public UObject
+class PROJECT_R04B_API UCharacterUpgrade : public UInventoryItemObject
 {
 	GENERATED_BODY()
 	
 public:
+	
+	UCharacterUpgrade();
 	
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Character Upgrade")
 	TObjectPtr<UCharacterUpgradesComponent> OwningComponent;

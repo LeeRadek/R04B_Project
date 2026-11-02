@@ -5,7 +5,7 @@
 
 UWeaponObject::UWeaponObject()
 {
-	
+	ItemType = EInventoryItemType::Weapon;
 }
 
 void UWeaponObject::Fire_Implementation()

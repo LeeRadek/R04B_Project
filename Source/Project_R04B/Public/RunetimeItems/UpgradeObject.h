@@ -4,13 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
+#include "RunetimeItems/InventoryItemObject.h"
 #include "UpgradeObject.generated.h"
+
 
 /**
  * 
  */
 UCLASS(Abstract, BlueprintType, Blueprintable)
-class PROJECT_R04B_API UUpgradeObject : public UObject
+class PROJECT_R04B_API UUpgradeObject : public UInventoryItemObject
 {
 	GENERATED_BODY()
 	

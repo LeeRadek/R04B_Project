@@ -19,9 +19,9 @@ public:
 	// Sets default values for this actor's properties
 	AItemPickup();
 	
-	
+	// if false create new object to contain runtime data
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item Pickup")
-	bool bIsNewItem = true;
+	bool bHasSavedRuntimeData = true;
 
 protected:
 

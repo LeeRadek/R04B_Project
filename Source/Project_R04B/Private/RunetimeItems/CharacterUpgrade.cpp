@@ -8,6 +8,11 @@
 #include "Actors/Characters/PlayableCharacters/BasePlayerChracter.h"
 #include "Logs/ProjectLogs.h"
 
+UCharacterUpgrade::UCharacterUpgrade()
+{
+	ItemType = EInventoryItemType::CharacterUpgrade;
+}
+
 void UCharacterUpgrade::InitializeUpgrade(
 	ABasePlayerChracter* OwningCharacter, 
 	UCharacterUpgradesComponent* CharacterUpgradesComponent,
@@ -38,6 +43,7 @@ void UCharacterUpgrade::InitializeUpgrade(
 		return;
 	}
 	WeaponInventoryComponent = WeaponComponent;
+	
 }
 
 

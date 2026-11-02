@@ -8,6 +8,7 @@
 
 class UCharacterUpgradesComponent;
 class UInventoryComponent;
+class UWeaponDataAsset;
 
 UCLASS()
 class PROJECT_R04B_API ABasePlayerChracter : public ACharacter
@@ -18,6 +19,8 @@ public:
 	// Sets default values for this character's properties
 	ABasePlayerChracter();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Starting Data")
+	TObjectPtr<UWeaponDataAsset> StartWeaponData;
 
 protected:
 	// Called when the game starts or when spawned

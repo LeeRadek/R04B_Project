@@ -11,11 +11,13 @@
 class UWeaponObject;
 class UWeaponDataAsset;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponPickedUp, UWeaponDataAsset*, PickedUpWeaponData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnWeaponPickedUp, UWeaponDataAsset*, PickedUpWeaponData,
+	FWeaponRuntimeData, PickedUpWeaponRuntimeData, UWeaponObject*, PickedUpWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipedWeaponDropped, UWeaponObject*, DroppedWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChanged, UWeaponObject*, DroppedWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponEquipped, UWeaponObject*, EquippedWeapon, int32, SlotIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUpgradeAddedToWeapon, UUpgradeObject*, AddedUpgrade, int32, SlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpgradeRemovedFromWeapon, UUpgradeObject*, RemovedUpgrade);
 
 // Component to manage the player's inventory of weapons, allowing for adding, equipping, and upgrading weapons
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnable), Blueprintable, BlueprintType, Abstract)
@@ -35,6 +37,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="InventoryComponent")
 	TObjectPtr<UWeaponObject> EquippedWeapon;
 	
+	// ------------Delegates for Inventory Events------------ //
+	
 	// Delegate to notify when a weapon is equipped, allowing for UI updates and other gameplay logic
 	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
 	FOnWeaponEquipped OnWeaponEquipped;
@@ -52,7 +56,10 @@ public:
 	FOnEquipedWeaponDropped OnEquippedWeaponDropped;
 	
 	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
-	FOnUpgradeAddedToWeapon OnUpgradAddedToWeapon;
+	FOnUpgradeAddedToWeapon OnUpgradeAddedToWeapon;
+	
+	UPROPERTY(BlueprintAssignable, Category="InventoryComponent")
+	FOnUpgradeRemovedFromWeapon OnUpgradeRemovedFromWeapon;
 
 protected:
 	// Called when the game starts
@@ -63,7 +70,7 @@ protected:
 	// @param WeaponDataAsset - The data asset containing the configuration and static data for the
 	UFUNCTION()
 	static void InitializeWeapon(UWeaponObject* WeaponToInitialize, UWeaponDataAsset* WeaponDataAsset,
-		const FWeaponRuntimeData& WeaponRuntimeData);
+		const FWeaponRuntimeData& WeaponRuntimeData, bool bIsNewWeapon = false);
 
 	// Function to create a new weapon object based on a weapon data asset
 	// @param WeaponDataAsset - The data asset containing the configuration and static data for the weapon to create
@@ -92,6 +99,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent", DisplayName="Add Upgrade To Equipped Weapon")
 	bool AddUpgradeToWeapon(UUpgradeObject* UpgradeToAdd);
 	
+	UFUNCTION(BlueprintCallable, Category="InventoryComponent", DisplayName="Remove Upgrade From Equipped Weapon")
+	bool IsAnyEmptyUpgradeSlotInEquippedWeapon() const;
+	
 	// Function to create a new upgrade object based on a specified upgrade class
 	// @param UpgradeClass - The class of the upgrade object to create, must be a subclass of UUpgradeObject
 	// @return A pointer to the newly created upgrade object, or nullptr if the creation failed
@@ -99,7 +109,7 @@ public:
 	UUpgradeObject* CreateUpgradeObject(TSubclassOf<UUpgradeObject> UpgradeClass);
 	
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
-	bool PickupWeapon(UWeaponDataAsset* WeaponDataAsset, FWeaponRuntimeData WeaponRuntimeData);
+	bool PickupWeapon(UWeaponDataAsset* WeaponDataAsset, FWeaponRuntimeData WeaponRuntimeData, bool bIsNewWeapon);
 	
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
 	bool PickupUpgrade(TSubclassOf<UUpgradeObject> UpgradeClass);
@@ -117,4 +127,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
 	UWeaponObject* GetEquipedWeapon() const { return EquippedWeapon; }
 
+private:
+	
+	// Function to give the player a starting weapon at the beginning of the game or when respawning
+	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
+	void GiveStartWeapon(UWeaponDataAsset* StartWeaponData);
+	
+	UFUNCTION(BlueprintCallable, Category="InventoryComponent")
+	static void InitializePickedUpWeapon(
+		UWeaponObject* PickedUpWeapon,
+		UWeaponDataAsset* PickedUpWeaponData,
+		const FWeaponRuntimeData& PickedUpWeaponRuntimeData, 
+		bool bIsNewWeapon);
+	
 };
